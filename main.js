@@ -30,6 +30,7 @@ const smallSleep = 400 * coefficientePatata;
 const mediumSleep = 1000 * coefficientePatata;
 const bigSleep = 2000 * coefficientePatata;
 
+//legge username e password dal file credentials.txt
 async function readCredentials(){
     let credentials = new Array();
     let fileStream = new String();
@@ -45,6 +46,7 @@ async function readCredentials(){
         return;
       })
 }
+//cancella i contenuti della cartella screenshots
 function clearScreenshotsFolder(){
     try{
     fs.readdir(screenshotsDir, (err, files) => {
@@ -73,7 +75,7 @@ async function saveScreenshot(directory, filename){
         console.log("I/O error: " + error);
     }
 }
-//clicca un elemento selezionato con css
+//clicca un elemento selezionato con xpath
 async function clickElementByXpath(selector){
     await driver.wait(until.elementLocated(By.xpath(selector)), 10000)
     .then(elem => elem.click())
@@ -94,40 +96,49 @@ async function getChildrenByCss(parentSelector, childrenSelector){
     .catch(err => console.log("errore" + err));
     return children;
 }
-//in un piano tariffa, all'interno di una sezione, apre un tab, si posiziona per vederlo bene,
-//fa uno screenshot, chiude il tab
-//tipoPiano, mainTab, selector: string
-async function navigateOpzioniPianiTabs(tipoPiano, mainTab, selector){
-    //apri tab
-    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'" + selector + "')]]"), 10000))
-    .then(button => button.click())
-    .then(() => driver.sleep(microSleep))
-    .then(() => driver.executeScript("arguments[0].scrollIntoView(true);", driver.findElement(By.xpath("//*[text()[contains(.,'" + selector + "')]]"))))
-    .then(() => driver.sleep(smallSleep))
-    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - ' + tipoPiano + ' - ' + mainTab + ' - ' + selector)))
+//naviga dentro activity (piani, registrati, login)
+async function navigateActivity(){
+    //entra in activity
+    await driver.wait(until.elementLocated(By.css('.v-responsive.v-image.ma-auto')), 10000)
+    .then(activityButton => activityButton.click())
+    .then(() => driver.sleep(mediumSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - activity')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
     
-    //chiudi tab
-    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'" + selector +"')]]"), 10000))
+    //clicca su piani ed entra per navigare in tutti i piani
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Piani tariffari')]]"), 10000))
     .then(button => button.click())
-    .then(() => driver.sleep(microSleep))
-    .catch(err => console.log("errore" + err));
-}
-//cicla in una sezione di un piano per tutti i tab presenti
-//tipoPiano, mainTab, selector sono string
-async function navigateOpzioniPiani(tipoPiano, nomeTab, itemsTab){
-    for(const item of Object.values(itemsTab)){
-        await navigateOpzioniPianiTabs(tipoPiano, nomeTab, item);
-    }
-}
-//tipoPiano, mainTab sono string
-async function clickNextTab(tipoPiano, nomeTab){
-    return await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'" + nomeTab + "')] and (@class = 'v-tabs__item')]"), 10000))
-    .then(button => button.click())
-    .then(() => driver.sleep(smallSleep))
-    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - ' + tipoPiano + ' - ' + nomeTab)))
+    .then(() => driver.sleep(bigSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - piani_tariffari')))
     .then(() => imgN++)
+    .then(() => navigatePiani())
+    .then(() => clickElementByCss(backArrow))
+    .catch(err => console.log("errore" + err));
+
+    //clicca registrati
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Registrati')]]"), 10000))
+    .then(button => button.click())
+    .then(() => driver.sleep(bigSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - registrazione')))
+    .then(() => imgN++)
+    //crea account?
+    .then(() => clickElementByCss(backArrowRegistrati))
+    .then(() => driver.sleep(mediumSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - registrazione_annulla')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+    
+    //conferma vuoi annullare registrazione
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Ok')]]"), 10000))
+    .then(button => button.click())
+    .then(() => driver.sleep(mediumSleep))
+    .catch(err => console.log("errore" + err));
+
+    //siamo tornati in home, clicca activity di nuovo
+    await driver.wait(until.elementLocated(By.css('.v-responsive.v-image.ma-auto')), 10000)
+    .then(activityButton => activityButton.click())
+    .then(() => driver.sleep(bigSleep))
     .catch(err => console.log("errore" + err));
 }
 //naviga nei piani e dentro le opzioni per ciascuno
@@ -227,25 +238,43 @@ async function navigatePiani(){
         .then(() => driver.sleep(mediumSleep));
     }
 }
-async function navigateActivity(){
-    //entra in activity
-    await driver.wait(until.elementLocated(By.css('.v-responsive.v-image.ma-auto')), 10000)
-    .then(activityButton => activityButton.click())
-    .then(() => driver.sleep(mediumSleep))
-    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - activity')))
+/*cicla in una sezione di un piano per tutti i tab presenti
+tipoPiano, mainTab, selector sono string */
+async function navigateOpzioniPiani(tipoPiano, nomeTab, itemsTab){
+    for(const item of Object.values(itemsTab)){
+        await guardaDettagliPiano(tipoPiano, nomeTab, item);
+    }
+}
+//tipoPiano, mainTab sono string
+async function clickNextTab(tipoPiano, nomeTab){
+    return await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'" + nomeTab + "')] and (@class = 'v-tabs__item')]"), 10000))
+    .then(button => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - ' + tipoPiano + ' - ' + nomeTab)))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+}
+//in un piano tariffa, all'interno di una sezione, apre un tab, si posiziona per vederlo bene,
+//fa uno screenshot, chiude il tab
+//tipoPiano, mainTab, selector: string
+async function guardaDettagliPiano(tipoPiano, mainTab, selector){
+    //apri tab
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'" + selector + "')]]"), 10000))
+    .then(button => button.click())
+    .then(() => driver.sleep(microSleep))
+    .then(() => driver.executeScript("arguments[0].scrollIntoView(true);", driver.findElement(By.xpath("//*[text()[contains(.,'" + selector + "')]]"))))
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - ' + tipoPiano + ' - ' + mainTab + ' - ' + selector)))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
     
-    //clicca su piani ed entra per navigare in tutti i piani
-    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Piani tariffari')]]"), 10000))
+    //chiudi tab
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'" + selector +"')]]"), 10000))
     .then(button => button.click())
-    .then(() => driver.sleep(bigSleep))
-    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - piani_tariffari')))
-    .then(() => imgN++)
-    .then(() => navigatePiani())
-    .then(() => clickElementByCss(backArrow))
+    .then(() => driver.sleep(microSleep))
     .catch(err => console.log("errore" + err));
 }
+//fa il login
 async function doLogin(){
     //entra su login
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Hai già un account?')]]"), 10000))
@@ -335,8 +364,59 @@ async function doLogin(){
         .catch(err => console.log("errore" + err));
     } 
 }
+//naviga dentro il profilo e tutte le opzioni
 async function navigateProfilo(){
-    //gestisci, screenshot, page down, screenshot
+    //* clicca alerts ***********************************************/
+    await driver.wait(until.elementLocated(By.css(".v-icon.mdi.mdi-alert")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home - alerts')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err)); 
+    //ok
+    await driver.wait(until.elementLocated(By.css(".v-progress-circular__overlay")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home - alerts')))
+    .catch(err => console.log("errore" + err));
+    //torna in profilo
+    await driver.wait(until.elementLocated(By.css(".v-avatar")), 10000)
+    .then(button => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .catch(err => console.log("errore" + err));
+
+    /*clicca help  ***********************************************/
+    await driver.wait(until.elementLocated(By.css(".v-icon.mdi.mdi-help")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home - alerts')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err)); 
+    //ok
+    await driver.wait(until.elementLocated(By.css(".v-progress-circular__overlay")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home - help')))
+    .catch(err => console.log("errore" + err));
+    //ok
+    await driver.wait(until.elementLocated(By.css(".v-progress-circular__overlay")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home - help')))
+    .catch(err => console.log("errore" + err));
+    //ok
+    await driver.wait(until.elementLocated(By.css(".v-progress-circular__overlay")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home - help')))
+    .catch(err => console.log("errore" + err));
+    //torna in profilo
+    await driver.wait(until.elementLocated(By.css(".v-avatar")), 10000)
+    .then(button => button.click())
+    .then(() => driver.sleep(mediumSleep))
+    .catch(err => console.log("errore" + err));
+
+    /*gestisci info  ***********************************************/
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Gestisci')] and (@class = 'v-btn__content')]")), 10000)
     .then((button) => button.click())
     .then(() => driver.sleep(smallSleep))
@@ -367,19 +447,19 @@ async function navigateProfilo(){
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-*/
+    */
+   
     await clickElementByCss(backArrow)
     .then(() => driver.sleep(smallSleep))
     .catch(err => console.log("errore" + err));
 
-    //clicca gestisci situazione contabile
+    /*clicca situazione contabile - riepilogo *******************************/
     await driver.wait(until.elementLocated(By.css(".component-gradient-card.component-card-with-report")), 10000)
     .then((button) => button.click())
     .then(() => driver.sleep(smallSleep))
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - situazione contabile - riepilogo')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-
     //clicca portafoglio - dettaglio
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Dettaglio')] and (@class = 'v-btn__content')]")), 10000)
     .then((button) => button.click())
@@ -387,46 +467,42 @@ async function navigateProfilo(){
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - situazione contabile - riepilogo - dettaglio')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-
     //chiudi dettagli
     await clickElementByCss(backCross)
     .catch(err => console.log("errore" + err));
 
-    //clicca fatture
+    //clicca fatture 
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Fatture')] and (@class = 'v-tabs__item')]")), 10000)
     .then((button) => button.click())
     .then(() => driver.sleep(smallSleep))
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - situazione contabile - fatture')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-    
-    //clicca fatture
+    //clicca depositi
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'depositi')] and (@class = 'v-tabs__item')]")), 10000)
     .then((button) => button.click())
     .then(() => driver.sleep(smallSleep))
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - situazione contabile - depositi')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-
     //chiudi situazione contabile
     await clickElementByCss(backArrow)
     .catch(err => console.log("errore" + err));
 
-    //apri credito prepagato
+    /*apri credito prepagato  ***********************************************/
     await driver.wait(until.elementLocated(By.css(".layout.subheading.font-weight-regular.row.align-center")), 10000)
     .then((button) => button.click())
     .then(() => driver.sleep(smallSleep))
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - credito prepagato')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-
     //annulla
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Annulla')] and (@class = 'v-btn__content')]")), 10000)
     .then((button) => button.click())
     .then(() => driver.sleep(smallSleep))
     .catch(err => console.log("errore" + err));
 
-    //inserisci codice coupon
+    /*inserisci codice coupon  ***********************************************/
     await driver.wait(until.elementLocated(By.css("[aria-label=\"Inserisci un codice coupon\"]")), 10000)
     .then((field) => field.sendKeys(cazzo))
     .then(() => driver.sleep(mediumSleep))
@@ -434,7 +510,7 @@ async function navigateProfilo(){
     //invia
     await driver.wait(until.elementLocated(By.css(".v-input__icon.v-input__icon--append")), 10000)
     .then((button) => button.click())
-    .then(() => driver.sleep(smallSleep))
+    .then(() => driver.sleep(mediumSleep))
     .catch(err => console.log("errore" + err));
     //cazzo non è un coupon valido, che strano
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Conferma')] and (@class = 'v-btn__content')]")), 10000)
@@ -444,7 +520,7 @@ async function navigateProfilo(){
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
     
-    //prenotazioni
+    /*prenotazioni  ***********************************************/
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Le mie prenotazioni')] and (@class = 'v-list__tile__title')]")), 10000)
     .then((button) => button.click())
     .then(() => driver.sleep(smallSleep))
@@ -477,20 +553,18 @@ async function navigateProfilo(){
     await clickElementByCss(backCross)
     .catch(err => console.log("errore" + err));
     */
-
     //go back
     await clickElementByCss(backArrow)
     .then(() => driver.sleep(smallSleep))
     .catch(err => console.log("errore" + err));
 
-    //abbonamenti
+    /*abbonamenti  ***********************************************/
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'I miei abbonamenti')] and (@class = 'v-list__tile__title')]")), 10000)
     .then((button) => button.click())
     .then(() => driver.sleep(smallSleep))
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - abbonamenti')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-
     //aggiungi piano
     await clickElementByCss(".component-button.mx-auto.my-4.v-btn.v-btn--floating.v-btn--depressed")
     .then(() => driver.sleep(smallSleep))
@@ -505,7 +579,7 @@ async function navigateProfilo(){
     .then(() => driver.sleep(smallSleep))
     .catch(err => console.log("errore" + err));
 
-    //guidatori
+    /*guidatori  ***********************************************/
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'miei guidatori')] and (@class = 'v-list__tile__title')]")), 10000)
     .then((button) => button.click())
     .then(() => driver.sleep(smallSleep))
@@ -518,7 +592,6 @@ async function navigateProfilo(){
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - aggiungi guidatore')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-
     //go back
     await clickElementByCss(".v-icon.v-icon--link.mdi.mdi-close")
     .then(() => driver.sleep(smallSleep))
@@ -527,7 +600,7 @@ async function navigateProfilo(){
     .then(() => driver.sleep(smallSleep))
     .catch(err => console.log("errore" + err));
 
-     //metodi di pagamento
+     /*metodi di pagamento  ***********************************************/
      await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'metodi di pagamento')] and (@class = 'v-list__tile__title')]")), 10000)
      .then((button) => button.click())
      .then(() => driver.sleep(smallSleep))
@@ -546,7 +619,6 @@ async function navigateProfilo(){
      .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - aggiungi metodo pagamento -  conferma')))
      .then(() => imgN++)
     */
-
      //go back
      await clickElementByCss(".v-icon.v-icon--link.mdi.mdi-close")
     .then(() => driver.sleep(smallSleep))
@@ -555,36 +627,115 @@ async function navigateProfilo(){
     .then(() => driver.sleep(smallSleep))
     .catch(err => console.log("errore" + err));
 
-    //documenti
+    /*documenti  ***********************************************/
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'documenti')] and (@class = 'v-list__tile__title')]")), 10000)
     .then((button) => button.click())
     .then(() => driver.sleep(smallSleep))
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - documenti')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-
+    //go back
     await clickElementByCss(backArrow)
     .then(() => driver.sleep(smallSleep))
     .catch(err => console.log("errore" + err));
 
-    //segnalazioni
+    /*segnalazioni  ***********************************************/
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'segnalazioni')] and (@class = 'v-list__tile__title')]")), 10000)
     .then((button) => button.click())
     .then(() => driver.sleep(smallSleep))
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - segnalazioni')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-
     await clickElementByCss(backArrow)
     .then(() => driver.sleep(smallSleep))
     .catch(err => console.log("errore" + err));
 
+    /*privacy  ***********************************************/
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Privacy')] and (@class = 'v-list__tile__title')]")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - privacy')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+    //cicla nei contratti
+    await driver.wait(until.elementsLocated(By.css("li, .v-expansion-panel__container")), 10000)
+    .then(tabs => guardaPrivacyTabs(tabs))
+    .then(() => driver.sleep(smallSleep))
+    .catch(err => console.log("errore" + err));
+    //torna a profilo
+    await clickElementByCss(backArrow)
+    .then(() => driver.sleep(smallSleep))
+    .catch(err => console.log("errore" + err));
+    
+    //clicca impostazioni  ***********************************************/
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Impostazioni')] and (@class = 'v-list__tile__title')]")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - impostazioni')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+    //clicca centro supporto?
+    /*
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Centro Supporto')] and (@class = 'v-list__tile__title')]")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - impostazioni')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+    */
+    //clicca aggiungi account
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Aggiungi account')] and (@class = 'v-btn__content')]")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - impostazioni -  aggiungi account')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+    //torna indietro
+    await clickElementByCss(".v-icon.v-icon--link.mdi.mdi-close")
+    .then(() => driver.sleep(smallSleep))
+    .catch(err => console.log("errore" + err));
+
+    //clicca cambia password
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Cambia Password')] and (@class = 'v-btn__content')]")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - impostazioni -  cambia password')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+    //torna indietro
+    await clickElementByCss(".v-icon.v-icon--link.mdi.mdi-close")
+    .then(() => driver.sleep(smallSleep))
+    .catch(err => console.log("errore" + err));
+
+    //clicca esci
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Esci')] and (@class = 'v-btn__content')]")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - profilo - impostazioni - esci')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
 }
+//naviga dentro i vari tab della sezione privacy del profilo
+async function guardaPrivacyTabs(tabs){
+    for(const tab of tabs){
+        await tab.click()
+        .then(() => driver.sleep(microSleep))
+        .then(() => driver.executeScript("arguments[0].scrollIntoView(true);", tab))
+        .then(() => driver.sleep(smallSleep))
+        .then(() => (saveScreenshot(screenshotsDir, imgN + ' - privacy agreement')))
+        .then(() => imgN++)
+        .catch(err => console.log("errore" + err));
+        
+        //chiudi tab
+        await tab.click()
+        .then(() => driver.sleep(microSleep))
+        .catch(err => console.log("errore" + err));
+    }
+}
+//main
 async function doStuff(){
     clearScreenshotsFolder();
     driver.manage().window().maximize();
-
-    await readCredentials();
 
     //home screenshot
     await driver.get('https://mobile.playcar.net')
@@ -592,47 +743,25 @@ async function doStuff(){
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-/*
+
     //naviga in activity
     await navigateActivity()
     .catch(err => console.log(err));
-
-    //clicca registrati
-    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Registrati')]]"), 10000))
-    .then(button => button.click())
-    .then(() => driver.sleep(bigSleep))
-    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - registrazione')))
-    .then(() => imgN++)
-    //crea account?
-    .then(() => clickElementByCss(backArrowRegistrati))
-    .then(() => driver.sleep(mediumSleep))
-    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - registrazione_annulla')))
-    .then(() => imgN++)
-    .catch(err => console.log("errore" + err));
     
-    //conferma vuoi annullare registrazione
-    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Ok')]]"), 10000))
-    .then(button => button.click())
-    .then(() => driver.sleep(mediumSleep))
-    .catch(err => console.log("errore" + err));
-*/
-    //siamo tornati in home, clicca activity di nuovo
-    await driver.wait(until.elementLocated(By.css('.v-responsive.v-image.ma-auto')), 10000)
-    .then(activityButton => activityButton.click())
-    .then(() => driver.sleep(bigSleep))
-    .catch(err => console.log("errore" + err));
-    
+    //legge credenziali da file
+    await readCredentials();
     //fai login
     await doLogin()
     .then(() => driver.sleep(smallSleep))
     .catch(err => console.log("errore" + err));  
     
+    //naviga nel profilo
     await navigateProfilo()
     .then(() => driver.sleep(bigSleep))
     .catch(err => console.log("errore" + err));  
-
 }
-
-(async function(){await doStuff()
+(async function(){
+    await doStuff()
     .then(() => driver.quit())
-    .catch(() => driver.quit())})();
+    .catch(() => driver.quit())
+})();
