@@ -359,6 +359,17 @@ async function doLogin(){
         .then(() => imgN++)
         .catch(err => console.log("errore" + err));
     } 
+    //guarda i filtri nella home
+    await driver.wait(until.elementLocated(By.css(".v-icon.mdi.mdi-filter-variant")), 10000)
+    .then(button => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - filtri mappa')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+    await driver.wait(until.elementLocated(By.css(".v-icon.mx-auto.mdi.mdi-chevron-up")), 10000)
+    .then(button => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .catch(err => console.log("errore" + err));
 }
 //naviga dentro il profilo e tutte le opzioni
 async function navigateProfilo(){
@@ -424,6 +435,32 @@ async function navigateProfilo(){
     .then(() => driver.sleep(smallSleep))
     .catch(err => console.log("errore" + err));
 
+    /*cambia pfp ***********************************************
+    chiede permessi per webcam e si blocca
+    await driver.wait(until.elementLocated(By.css(".component-button.small.camera-button.v-btn.v-btn--icon")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(mediumSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home - cambia pfp')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+    //go back
+    await driver.wait(until.elementLocated(By.css(".v-icon.v-icon--link.mdi.mdi-close")), 10000)
+    .then(button => button.click())
+    .then(() => driver.sleep(smallSleep))
+    .catch(err => console.log("errore" + err));
+*/
+    /*cambia account  ***********************************************
+    ?????? non mi compare il bottone per cambiare account quando uso selenium???
+    await driver.wait(until.elementLocated(By.css(".mdi-account-multiple")), 10000)
+    .then((button) => button.click())
+    .then(() => driver.sleep(mediumSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home - cambia account')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+    //go back
+    await clickElementByCss(backCross)
+    .catch(err => console.log("errore" + err));
+*/
     /*gestisci info  ***********************************************/
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Gestisci')] and (@class = 'v-btn__content')]")), 10000)
     .then((button) => button.click())
@@ -751,11 +788,11 @@ async function doStuff(){
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-
+/*
     //naviga in activity
     await navigateActivity(false)
     .catch(err => console.log(err));
-
+*/
     //legge credenziali da file
     await readCredentials();
     //fai login
