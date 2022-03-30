@@ -169,18 +169,42 @@ async function navigateActivity(loggato){
     }
 }
 async function navigatePrenotazioni(){
-    /*await prenotaVeicoloRiservato()
+    await prenotaVeicoloRiservato()
     .catch(err => console.log("errore" + err));
 
-    //entra in activity
     await driver.wait(until.elementLocated(By.css('.v-responsive.v-image.ma-auto')), 10000)
     .then(activityButton => activityButton.click())
     .then(() => driver.sleep(mediumSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - activity')))
+    .then(() => imgN++)
     .catch(err => console.log("errore" + err));
 
     await prenotaAutoFurgone()
     .catch(err => console.log("errore" + err));
-    */
+
+    await driver.wait(until.elementLocated(By.css('.v-responsive.v-image.ma-auto')), 10000)
+    .then(activityButton => activityButton.click())
+    .then(() => driver.sleep(mediumSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - activity')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+
+    //clicca auto o furgone
+    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'o un furgone')]]"), 10000))
+    .then(button => button.click())
+    .then(() => driver.sleep(mediumSleep))
+    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - prenota - auto o furgone')))
+    .then(() => imgN++)
+    .catch(err => console.log("errore" + err));
+
+    await prenotaVeicolo('furgone', 'Free-Floating')
+    .catch(err => console.log("errore" + err));
+
+    //go back
+    await clickElementByCss(backArrow)
+    .then(() => driver.sleep(smallSleep))
+    .catch(err => console.log("errore" + err));
+    
     //clicca bicicletta
     await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'bicicletta')]]"), 10000))
     .then(button => button.click())
@@ -189,6 +213,7 @@ async function navigatePrenotazioni(){
 
     await prenotaVeicolo('bicicletta', 'One Way')
     .catch(err => console.log("errore" + err));
+
     //back
     await clickElementByCss(backArrow)
     .then(() => driver.sleep(smallSleep))
@@ -446,70 +471,6 @@ async function prenotaAutoFurgone(){
     //skippa roba
     await skipNotices()
     .catch(err => console.log("errore" + err));
-
-    //FREE FLOATING ***********************************
-
-    //siamo tornati in home, clicca activity di nuovo
-    await driver.wait(until.elementLocated(By.css('.v-responsive.v-image.ma-auto')), 10000)
-    .then(activityButton => activityButton.click())
-    .then(() => driver.sleep(bigSleep))
-    .catch(err => console.log("errore" + err));
-
-    //auto o furgone
-    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'o un furgone')]]"), 10000))
-    .then(button => button.click())
-    .then(() => driver.sleep(mediumSleep))
-    .catch(err => console.log("errore" + err));
-
-    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Free-Floating')]]"), 10000))
-    .then(button => button.click())
-    .then(() => driver.sleep(mediumSleep))
-    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - prenota - auto o furgone - free-floating')))
-    .then(() => imgN++)
-    .catch(err => console.log("errore" + err));
-
-    //qr code
-    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Inquadra il codice QR')]]"), 10000))
-    .then(button => button.click())
-    .then(() => driver.sleep(mediumSleep))
-    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - prenota - auto o furgone - free-floating')))
-    .then(() => imgN++)
-    .catch(err => console.log("errore" + err));
-    //chiudi
-    await driver.wait(until.elementLocated(By.css(".v-icon.v-icon--link.mdi.mdi-close")), 10000)
-    .then(button => button.click())
-    .then(() => driver.sleep(bigSleep))
-    .catch(err => console.log("errore" + err));
-
-    //inserisci targa
-    await driver.wait(until.elementLocated(By.xpath("//*[@id=\"view-home\"]/div/div/div/div[3]/div[1]/form/div/div/div/div/div[1]/div/input")), 10000)
-    .then((field) => field.sendKeys('INVERSTEST'))
-    .then(() => driver.sleep(mediumSleep))
-    .catch(err => console.log("errore" + err));
-    //conferma
-    await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'Conferma')]]")), 10000)
-    .then(button => button.click())
-    .then(() => driver.sleep(mediumSleep))
-    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - prenota - auto o furgone - free floating')))
-    .then(() => imgN++)
-    .catch(err => console.log("errore" + err));
-
-    await driver.wait(until.elementLocated(By.css(".layout.component-close-button.text-xs-right")), 10000)
-    .then(button => button.click())
-    .then(() => driver.sleep(mediumSleep))
-    .then(() => (saveScreenshot(screenshotsDir, imgN + ' - prenota - auto o furgone - free floating')))
-    .then(() => imgN++)
-    .catch(err => console.log("errore" + err));
-
-    
-    //go back
-    await clickElementByCss(backArrow)
-    .then(() => driver.sleep(smallSleep))
-    .catch(err => console.log("errore" + err));
-    await clickElementByCss(backArrow)
-    .then(() => driver.sleep(smallSleep))
-    .catch(err => console.log("errore" + err));
-    
 }
 async function prenotaVeicolo(tipoVeicolo, tipoViaggio){
     //clicca tipo viaggio
@@ -741,19 +702,19 @@ async function skipNotices(){
         //clicca continua come privato
         await driver.wait(until.elementLocated(By.xpath("//*[text()[contains(.,'privato')] and (@class = 'text-wrap')]")), 10000)
         .then(button => button.click())
-        .then(() => driver.sleep(smallSleep))
+        .then(() => driver.sleep(mediumSleep))
         .catch(err => console.log("errore" + err));
 
         //clicca skippa metodo pagamento
         await driver.wait(until.elementLocated(By.css(".v-progress-circular__overlay")), 10000)
         .then(button => button.click())
-        .then(() => driver.sleep(mediumSleep))
+        .then(() => driver.sleep(bigSleep))
         .catch(err => console.log("errore" + err));
 
         //clicca skippa selezione piano
         await driver.wait(until.elementLocated(By.css(".v-progress-circular__overlay")), 10000)
         .then(button => button.click())
-        .then(() => driver.sleep(smallSleep))
+        .then(() => driver.sleep(mediumSleep))
         .catch(err => console.log("errore" + err));
     }
 }
@@ -1174,13 +1135,11 @@ async function doStuff(){
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home')))
     .then(() => imgN++)
     .catch(err => console.log("errore" + err));
-/*
+
     //naviga in activity
     await navigateActivity(false)
     .catch(err => console.log(err));
 
-    
-*/
     //siamo tornati in home, clicca activity di nuovo
     await driver.wait(until.elementLocated(By.css('.v-responsive.v-image.ma-auto')), 10000)
     .then(activityButton => activityButton.click())
@@ -1198,12 +1157,12 @@ async function doStuff(){
     await navigateActivity(true)
     .then(() => driver.sleep(smallSleep))
     .catch(err => console.log("errore" + err));
-/*
+
     //naviga nel profilo
     await navigateProfilo()
     .then(() => driver.sleep(bigSleep))
     .catch(err => console.log("errore" + err));
-*/
+
 }
 (async function(){
     await doStuff()
