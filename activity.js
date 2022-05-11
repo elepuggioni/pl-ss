@@ -265,7 +265,7 @@ async function prenotaVeicoloRiservato(){
     //mostra foto
     await driver.wait(until.elementLocated(By.css(".v-icon.grow.mdi.mdi-chevron-down")), 10000)
     .then((button) => button.click())
-    .then(() => driver.sleep(mediumSleep))
+    .then(() => driver.sleep(bigSleep))
     .then(() => driver.executeScript("arguments[0].scrollIntoView(true);", driver.findElement(By.css(".v-icon.grow.mdi.mdi-chevron-up"))))
     .then(() => driver.sleep(mediumSleep))
     .then(() => (saveScreenshot(screenshotsDir, getNum() + ' - prenota -  veicolo riservato')))

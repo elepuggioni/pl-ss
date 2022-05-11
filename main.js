@@ -11,6 +11,7 @@ const actions = driver.actions();
 
 //fs module init
 import filesystempkg from 'fs'
+import path from 'path';
 const fs = filesystempkg;
 const screenshotsDir = './Screenshots/';
 
@@ -34,9 +35,10 @@ const bigSleep = 2000 * coefficientePatata;
 
 //legge username e password dal file credentials.txt
 async function readCredentials(){
+
     let credentials = new Array();
     let fileStream = new String();
-    fs.readFile("C:\\Users\\playc\\Desktop\\elena\\pl-ss\\credentials.txt", 'utf-8', (err, data) => {
+    fs.readFile(process.cwd() + "\\credentials.txt", 'utf-8', (err, data) => {
         if (err) {
           console.error(err)
           return;
@@ -119,11 +121,13 @@ async function doStuff(){
     clearScreenshotsFolder();
     driver.manage().window().maximize();
 
+    
     //home screenshot
     await driver.get('https://mobile.playcar.net')
     .then(() => driver.sleep(bigSleep))
     .then(() => (saveScreenshot(screenshotsDir, imgN + ' - home')))
     .then(() => imgN++)
+    .then(() => console.log(dir))
     .catch(err => console.log(err));
 
     //naviga in activity
