@@ -1,7 +1,5 @@
-# pl-ss
+# playcar-screenshots
 
-richiede nella root del progetto:
+A script that uses browser automation (selenium) to navigate the mobile.playcar.com website and take a screenshot of every page
 
-1) un file credentials.txt con username e password di playcar, entrambi nella stessa riga, separati da una virgola, senza spazi, es "username,password"
-
-2) chromedriver.exe, scaricare da https://chromedriver.storage.googleapis.com/index.html la versione appropriata
+requires in project root chromedriver.exe https://chromedriver.storage.googleapis.com/index.html
