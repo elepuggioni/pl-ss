@@ -21,8 +21,8 @@ const backArrow = '.v-icon.shrink.mdi.mdi-chevron-left';
 //counter per il nome degli screenshot
 let imgN = 0;
 //credenziali login prese da file credentials.txt
-let username;
-let password;
+let username = process.env.USERNAME;
+let password = process.env.PASSWORD;
 //quanto è lento il pc/la connessione? aumenta gli sleep in modo che faccia in tempo a
 //caricare e fare screenshot
 const coefficientePatata = 1;
@@ -33,23 +33,6 @@ const smallSleep = 400 * coefficientePatata;
 const mediumSleep = 1000 * coefficientePatata;
 const bigSleep = 2000 * coefficientePatata;
 
-//legge username e password dal file credentials.txt
-async function readCredentials(){
-
-    let credentials = new Array();
-    let fileStream = new String();
-    fs.readFile(process.cwd() + "\\credentials.txt", 'utf-8', (err, data) => {
-        if (err) {
-          console.error(err)
-          return;
-        }
-        fileStream = data;
-        credentials = fileStream.split(',');
-        username = credentials[0];
-        password = credentials[1];
-        return;
-      })
-}
 //cancella i contenuti della cartella screenshots
 function clearScreenshotsFolder(){
     try{
